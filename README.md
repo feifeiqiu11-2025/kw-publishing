@@ -14,7 +14,7 @@ It can also resize a single PDF for print with bleed.
 ## Install
 
 ```bash
-git clone https://github.com/<owner>/kw-publishing ~/.claude/skills/kw-publishing
+git clone https://github.com/feifeiqiu11-2025/kw-publishing ~/.claude/skills/kw-publishing
 ```
 
 Then in Claude Code, run `/kw-publishing` and say "make a new class book".
