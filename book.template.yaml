@@ -1,0 +1,70 @@
+# KindleWood class book. Paths are relative to this folder.
+# Defaults follow book-rules.md; bilingual fields take "text" or {en: ..., zh: ...}.
+
+title: {en: "Our Story Book", zh: "我们的故事书"}
+subtitle: "KindleWood Studio · Fall 2026"
+school: "Sunshine Elementary"   # cover footer: "Created by <school> Storytellers"
+sizes: [letter]                 # letter 8.5x11 | digest 5.5x8.5 | a5 5.83x8.27
+scenes_per_page: 4              # letter: 4 = flowing 2x2 rows (default) | 2 = zigzag rows
+scene_numbers: true             # comic number badges; first-story = preview on Ch 1 Story 1
+
+cover:
+  front_image: cover/front.png  # a finished front cover, used as is (Recommended)
+  spine_color: "#6d5bd0"        # used only when there is no front_image
+  # Without front_image, the cover is composed from these parts:
+  # background: cover/background.png   # library pick; auto = plain pastel
+  # characters: cover/characters       # transparent PNGs look best
+  # scenes: cover/scenes               # up to 6 tilted photo tiles
+  # title_baked: true                  # the background already shows the title
+
+# The back cover is the KindleWood Families page from the exports, as is.
+# back_cover:
+#   image: back-cover/back.jpg         # only to replace it
+
+# fonts:                        # defaults shown
+#   en: Chalkboard SE
+#   zh_heading: ZCOOL KuaiLe
+#   zh_body: ZCOOL KuaiLe       # PingFang SC = standard character shapes
+#   signature: Snell Roundhand  # About This Book sign-off
+
+about_book:
+  background: about-book/background.png
+  # Claude drafts this from about-book/emails/; the teacher approves it.
+  text_en: |
+    ...
+  # text_zh: |                  # only if EN + 中文 fit on one page
+  #   ...
+  signed: "Teacher A, B & C"   # printed in the signature font
+
+authors:
+  background: authors/background.png
+  list:                         # English only; no notes = one-page portrait grid
+    - name: Child Name
+      photo: authors/photos/Child Name.jpg   # in-story character ($BA portraits)
+      # note: "One or two sentences about how they grew."
+
+contents:
+  background: contents/background.png
+
+# Chapters = class themes, each in its own folder (one PDF per story,
+# sorted by file name). Per-story fixes go under overrides, keyed by file name;
+# scene numbers there are the EXPORTED numbers.
+chapters:
+  - title: {en: "This Is Me!", zh: "这就是我！"}
+    dir: "Chapter 1"
+    # overrides:
+    #   "Story File.pdf":
+    #     title: "Shorter Title"
+    #     pages: {4: designer, 7: "drop:extra"}
+    #     scene_edits: {7: {en: "...", zh: "..."}}
+    #     insert_scenes: [{after: 7, img: inserts/new.jpg, en: "...", zh: "..."}]
+    #     designer_words: {Sam: ["I see red leaves.", "..."]}
+
+imagine:
+  background: imagine/background.png
+  # title / message / question: override the defaults (book-rules 30)
+  # extra_prompts: ["...", "..."]   # Story Idea filler pages
+
+# Library IDs picked during onboarding, kept for resuming.
+# background_choices: {about_book: rainbow-rain, authors: golden-meadow,
+#                      contents: desert, imagine: space}

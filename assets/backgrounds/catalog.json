@@ -1,0 +1,80 @@
+[
+  {
+    "id": "candy-cloud-carnival",
+    "name": "Candy Cloud Carnival",
+    "file": "candy-cloud-carnival.png",
+    "baked_title": null
+  },
+  {
+    "id": "desert",
+    "name": "Desert",
+    "file": "desert.png",
+    "baked_title": null
+  },
+  {
+    "id": "forest",
+    "name": "Forest",
+    "file": "forest.png",
+    "baked_title": null
+  },
+  {
+    "id": "golden-meadow",
+    "name": "Golden Meadow",
+    "file": "golden-meadow.png",
+    "baked_title": null
+  },
+  {
+    "id": "ocean",
+    "name": "Ocean",
+    "file": "ocean.png",
+    "baked_title": null
+  },
+  {
+    "id": "peach-orchard",
+    "name": "Peach Orchard",
+    "file": "peach-orchard.png",
+    "baked_title": null
+  },
+  {
+    "id": "rainbow-rain",
+    "name": "Rainbow Rain",
+    "file": "rainbow-rain.png",
+    "baked_title": null
+  },
+  {
+    "id": "space",
+    "name": "Space",
+    "file": "space.png",
+    "baked_title": null
+  },
+  {
+    "id": "watercolor-about",
+    "name": "Blue & Purple \u2014 About",
+    "file": "watercolor-about.png",
+    "baked_title": null
+  },
+  {
+    "id": "watercolor-authors",
+    "name": "Blue & Purple \u2014 Authors",
+    "file": "watercolor-authors.png",
+    "baked_title": null
+  },
+  {
+    "id": "watercolor-imagine",
+    "name": "Blue & Purple \u2014 Imagine",
+    "file": "watercolor-imagine.png",
+    "baked_title": null
+  },
+  {
+    "id": "pastel-imagination",
+    "name": "Pastel Imagination",
+    "file": "pastel-imagination.png",
+    "baked_title": null
+  },
+  {
+    "id": "my-imagination-journey-original",
+    "name": "My Imagination Journey \u2014 Original",
+    "file": "my-imagination-journey-original.png",
+    "baked_title": "My Imagination Journey"
+  }
+]

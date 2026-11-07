@@ -1,0 +1,7 @@
+# local Python environment (recreated by SKILL.md setup)
+scripts/.venv/
+__pycache__/
+*.pyc
+.DS_Store
+# a real class's cover (children's art) -- kept on the author's machine only
+assets/examples/
