@@ -56,6 +56,10 @@ DEFAULT_FONTS = dict(en="Chalkboard SE", zh_heading="ZCOOL KuaiLe",
 SPARK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets",
                      "spark-writing.png")
 SPARK_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "spark")
+# The standard KindleWood Families back cover (user rule: always use this one).
+# Letter back panel incl. outer bleed, spine-side bleed trimmed off.
+BACK_COVER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets",
+                          "back-cover", "kindlewood-families-back.png")
 # (pose, message) for empty grid cells -- rotated so they don't repeat
 FILLERS = [("reading", "Keep reading — more adventures ahead!"),
            ("cheering", "You are a storyteller! Keep imagining!"),
@@ -588,6 +592,9 @@ body {{ font-family: "{en}", "{zhb}", sans-serif; color: #3b2f2a;
 .zz .row.rev {{ flex-direction: row-reverse }}
 .zz .art {{ width: {rowh}in; height: {rowh}in }}
 .zz .cap {{ flex: 1; padding: 0 .05in }}
+.zz .artw {{ position: relative; display: flex; align-items: center; justify-content: center }}
+.zz .cap.zcard {{ align-self: center; height: auto; max-height: 100%; border-radius: .18in;
+                 padding: .22in .24in; line-height: 1.3 }}
 .solo .art {{ width: {solo}in; height: {solo}in }}
 .flow {{ display: grid; grid-template-rows: 1fr 1fr; gap: {g4g}in }}
 .flow .row {{ min-height: 0; min-width: 0 }}
@@ -700,6 +707,12 @@ h2 .zhh {{ display: block; font-size: .6em; color: #6e625b; margin-top: .05in }}
                    object-fit: cover; border: .035in solid #f6dcc0; display: block }}
 .author .name {{ font-weight: 700; font-size: .78em; margin-top: .03in; line-height: 1.1 }}
 .author .note {{ font-size: {note}em; line-height: 1.35 }}
+.solo-author {{ display: flex; gap: .35in; align-items: flex-start; margin-top: .25in }}
+.solo-author .who {{ flex: 0 0 2.4in; text-align: center }}
+.solo-author .who img {{ width: 2.4in; height: 2.4in; border-radius: 50%; object-fit: cover;
+                        border: .06in solid #fff; display: block }}
+.solo-author .name {{ font-weight: 700; font-size: 1.15em; margin-top: .1in }}
+.solo-author .bio {{ flex: 1; font-size: 1em; line-height: 1.45; padding-top: .2in }}
 /* designers */
 .designers {{ display: grid; gap: .2in; justify-content: center;
              align-content: center; justify-items: center; align-items: center }}
@@ -795,8 +808,10 @@ class Book:
                 for grp in pack_designers(pieces, self.safe_w, self.safe_h):
                     self.pages.append(("designers", grp))
                 sc = story["scenes"]
+                sn = c.get("scene_numbers", True)
+                self.num = sn is True or (sn == "first-story" and ci == 1 and si == 1)
                 for i in range(0, len(sc), self.per_page):
-                    self.pages.append(("scenes", sc[i:i + self.per_page]))
+                    self.pages.append(("scenes", (sc[i:i + self.per_page], self.num)))
         self.flush()
         if c.get("imagine", True) is not False:
             self.imagine_page = len(self.pages) + 1
@@ -878,6 +893,22 @@ class Book:
 
     # -- html -----------------------------------------------------------
     def css(self):
+        css = self._css()
+        # book.yaml `scene_fit: contain` keeps each scene picture whole at its own
+        # aspect (photo pages of real artwork); default `cover` crops to a square.
+        if (self.cfg.get("scene_fit") or "cover") == "contain":
+            rowh = round((self.safe_h - 0.2) / 2, 3)
+            css += (
+                ".zz .row {{ align-items: center }}\n"
+                ".zz .art {{ width: auto; height: auto; max-height: {h}in; "
+                "max-width: {w}in; object-fit: contain; border: .05in solid #fff }}\n"
+                ".solo .art, .s1 .art {{ width: auto; height: auto; aspect-ratio: auto; "
+                "max-width: 100%; max-height: {h2}in; object-fit: contain }}\n"
+                ".cell .art {{ object-fit: contain; background: #fff }}\n"
+            ).format(h=rowh, w=round(self.safe_w * 0.64, 3), h2=round(self.safe_h * 0.7, 3))
+        return css
+
+    def _css(self):
         S, B = self.S, BLEED
         gap = 0.2
         faces, f = font_css(self.cfg)
@@ -902,6 +933,21 @@ class Book:
             pcell=1.22 if self.size == "letter" else 0.86,
             arows=arows,
             arowh=round((self.safe_h - head_h - (arows - 1) * 0.12) / arows, 3))
+
+    def art_size(self, path):
+        """contain mode: give every zigzag picture about the same area (portrait,
+        landscape and square alike), capped by the row box."""
+        if (self.cfg.get("scene_fit") or "cover") != "contain":
+            return ""
+        from PIL import Image
+        with Image.open(path) as im:
+            r = im.width / im.height
+        H = round((self.safe_h - 0.2) / 2, 3)
+        W = round(self.safe_w * 0.64, 3)
+        area = 0.75 * W * H                   # fits r = 0.75 .. 1.33 untouched
+        w, h = (area * r) ** 0.5, (area / r) ** 0.5
+        k = min(1, W / w, H / h)
+        return f' style="width:{w * k:.3f}in;height:{h * k:.3f}in;max-width:none;max-height:none"'
 
     def caption(self, s):
         return (f'<div class="cap center fit"><div class="en">{esc(s["en"])}</div>'
@@ -934,7 +980,18 @@ class Book:
         elif kind == "authors":
             bg = bg_of((self.cfg.get("authors") or {}).get("background"))
             cards = ""
-            if self.portraits:
+            au = self.cfg.get("authors") or {}
+            if len(au.get("list") or []) == 1:
+                p = au["list"][0]
+                img = f'<img src="{url(rel(p["photo"]))}">' if p.get("photo") else ""
+                note = bi(p.get("note"))[0]
+                body = (f'<div class="safe" style="display:flex;flex-direction:column">'
+                        f'<h2 style="text-align:center">{esc(au.get("heading") or "Meet the Author")}</h2>'
+                        f'<div class="solo-author"><div class="who">{img}'
+                        f'<div class="name">{esc(p["name"])}</div></div>'
+                        f'<div class="bio">{paras(note) if note else ""}</div></div></div>')
+                data = []
+            elif self.portraits:
                 cells = "".join(
                     f'<div class="pt"><div class="pimg">'
                     + (f'<img src="{url(rel(p["photo"]))}">' if p.get("photo") else "")
@@ -954,7 +1011,16 @@ class Book:
                         f'<div class="authors">{cards}</div></div>')
         elif kind == "toc":
             rows = []
+            one = bool(self.cfg.get("single_chapter"))
             for lvl, item, extra, pg in self.index:
+                if lvl == "ch" and one:
+                    continue
+                if lvl == "st" and one:
+                    n = sum(1 for l, *_ in self.index[:self.index.index((lvl, item, extra, pg)) + 1] if l == "st")
+                    rows.append(f'<li class="ch"><span>Story {n}: {esc(item.get("title") or extra["title"])} '
+                                f'<small>{esc(extra["byline"])}</small></span>'
+                                f'<span class="dots"></span><span>{pg}</span></li>')
+                    continue
                 if lvl == "ch":
                     rows.append(f'<li class="ch"><span>Chapter {extra}: '
                                 f'{esc(bi(item.get("title"))[0])}</span>'
@@ -973,10 +1039,13 @@ class Book:
                     f'<ul class="toc fit">{"".join(chunk)}</ul></div>')
         elif kind == "opener":
             ci, ch, si, st, story = data
-            body = (f'<div class="safe center opener">'
+            kick = ("" if self.cfg.get("single_chapter") else
                     f'<div class="kicker">Chapter {ci}: {esc(bi(ch.get("title"))[0])}'
-                    f' &nbsp;·&nbsp; Story {si}</div>'
-                    f'<img class="art" src="{url(story["cover"])}">'
+                    f' &nbsp;·&nbsp; Story {si}</div>')
+            oart = self.cfg.get("opener_art")  # book.yaml: opener picture size (in)
+            ost = f' style="width:{oart}in;height:{oart}in"' if oart else ""
+            body = (f'<div class="safe center opener">{kick}'
+                    f'<img class="art" src="{url(story["cover"])}"{ost}>'
                     f'<div class="title">{esc(st.get("title") or story["title"])}</div>'
                     f'<div class="byline">{esc(story["byline"])}</div></div>')
         elif kind == "designers":
@@ -986,6 +1055,7 @@ class Book:
             body = (f'<div class="safe designers" style="grid-template-columns:'
                     f'repeat({cols}, auto)">{imgs}</div>')
         elif kind == "scenes":
+            data, num = data
             if self.S["per_page"] == 1:
                 s = data[0]
                 body = (f'<div class="safe s1"><img class="art" src="{url(s["img"])}">'
@@ -995,9 +1065,14 @@ class Book:
                 body = (f'<div class="safe center solo"><img class="art" src="{url(s["img"])}">'
                         f'{self.caption(s)}</div>')
             else:
+                # zigzag rows: picture + caption alternate sides; numbered badge
+                # and pastel caption card match the 4-per-page rules (22-23)
                 rows = "".join(
                     f'<div class="row{" rev" if i % 2 else ""}">'
-                    f'<img class="art" src="{url(s["img"])}">{self.caption(s)}</div>'
+                    f'<div class="artw"><img class="art" src="{url(s["img"])}"{self.art_size(s["img"])}>'
+                    + (f'<div class="sno">{s["no"]}</div>' if num and s.get("no") else "")
+                    + f'</div><div class="cap center fit zcard c{(i + n) % 4}">'
+                    f'<div class="en">{esc(s["en"])}</div><div class="zh">{esc(s["zh"])}</div></div></div>'
                     for i, s in enumerate(data))
                 body = f'<div class="safe zz">{rows}</div>'
         elif kind == "flow":
@@ -1184,7 +1259,10 @@ def cover_html(cfg, size, spine, n_pages, ad=None):
     if cv.get("front_image"):
         front = front_html
     bk = cfg.get("back_cover") or {}
-    if bk.get("background") and ad:  # KindleWood page on its own background art
+    if not bk and os.path.exists(BACK_COVER):  # default: the standard back cover
+        back = (f'<div class="panel back"><div class="bg" style="background-image:'
+                f'url({url(BACK_COVER)})"></div></div>')
+    elif bk.get("background") and ad:  # KindleWood page on its own background art
         back = (f'<div class="panel back"><div class="bg" style="background-image:'
                 f'url({url(rel(bk["background"]))})"></div><div class="kwback framedback">'
                 f'<img src="{url(trim_white(ad)[0])}"></div></div>')
@@ -1370,6 +1448,13 @@ def gather(cfg):
             ov = {int(k): v for k, v in (st.get("pages") or {}).items()}
             s = load_story(src, os.path.join(cache, slugify(st["file"])), ov)
             s["title"] = os.path.splitext(os.path.basename(src))[0]
+            # scene_images: {<scene no>: path} swaps in an edited picture (e.g. a copy
+            # with plain photo edges trimmed); captions and numbering are unchanged
+            for no, path in (st.get("scene_images") or {}).items():
+                hit = next((x for x in s["scenes"] if x["no"] == int(no)), None)
+                if hit is None:
+                    sys.exit(f"scene_images: no scene {no} in {st['file']}")
+                hit["img"] = cfg["_rel"](path)
             # designer_words: {Sam: [lines...]} fills text missing from an export
             for name, lines in (st.get("designer_words") or {}).items():
                 u = next((u for u in s["units"] if u["name"].lower() == name.lower()), None)
@@ -1399,7 +1484,8 @@ def cmd_scan(a):
     for ch in cfg["chapters"]:
         print(f"[chapter] {bi(ch.get('title'))[0]}")
         for st in ch["stories"]:
-            kinds, _ = classify(cfg["_rel"](st["file"]))
+            ov = {int(k): v for k, v in (st.get("pages") or {}).items()}
+            kinds, _ = classify(cfg["_rel"](st["file"]), ov)  # shows book.yaml overrides
             summary = " ".join(f"{p}:{k}" for p, k in kinds)
             print(f"  {st['file']}\n    {summary}")
 

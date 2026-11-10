@@ -7,6 +7,11 @@ school: "Sunshine Elementary"   # cover footer: "Created by <school> Storyteller
 sizes: [letter]                 # letter 8.5x11 | digest 5.5x8.5 | a5 5.83x8.27
 scenes_per_page: 4              # letter: 4 = flowing 2x2 rows (default) | 2 = zigzag rows
 scene_numbers: true             # comic number badges; first-story = preview on Ch 1 Story 1
+# Single-author book (SKILL.md A1) -- uncomment:
+# scenes_per_page: 2            # zigzag rows (set above instead of 4)
+# scene_fit: contain            # whole pictures at their own aspect, equal visual area
+# single_chapter: true          # one story: no "Chapter N" labels, contents lists "Story 1"
+# opener_art: 6.6               # story-opener picture size in inches
 
 cover:
   front_image: cover/front.png  # a finished front cover, used as is (Recommended)
@@ -17,7 +22,8 @@ cover:
   # scenes: cover/scenes               # up to 6 tilted photo tiles
   # title_baked: true                  # the background already shows the title
 
-# The back cover is the KindleWood Families page from the exports, as is.
+# The back cover is always the standard KindleWood Families back
+# (assets/back-cover/kindlewood-families-back.png, book-rules 12).
 # back_cover:
 #   image: back-cover/back.jpg         # only to replace it
 
@@ -38,6 +44,7 @@ about_book:
 
 authors:
   background: authors/background.png
+  # heading: "Meet the Author"  # default with one author; the layout switches automatically
   list:                         # English only; no notes = one-page portrait grid
     - name: Child Name
       photo: authors/photos/Child Name.jpg   # in-story character ($BA portraits)
@@ -59,6 +66,7 @@ chapters:
     #     scene_edits: {7: {en: "...", zh: "..."}}
     #     insert_scenes: [{after: 7, img: inserts/new.jpg, en: "...", zh: "..."}]
     #     designer_words: {Sam: ["I see red leaves.", "..."]}
+    #     scene_images: {2: scenes-trimmed/p004-000.jpg}   # edited picture for scene 2
 
 imagine:
   background: imagine/background.png

@@ -195,6 +195,40 @@ Noto Sans SC.
 Captions shrink to fit through a `.fit` JS pass, so long sentences never
 overflow. That overflow was a bug in the hand-made zigzag sample.
 
+## Single-author settings (SKILL.md A1)
+
+| book.yaml | effect |
+|---|---|
+| `scenes_per_page: 2` | zigzag rows, one scene per half page; picture and caption swap sides; numbered badge + pastel caption card |
+| `scene_fit: contain` | pictures shown whole at their own aspect (default `cover` = square crop). Zigzag pictures get an equal visual area: area = 0.75 x box W x box H, box = 64% of safe width x row height |
+| `single_chapter: true` | no "Chapter N" kicker on the opener; contents rows read "Story N: <title> <byline>" |
+| `opener_art: 6.6` | story-opener picture size in inches (default 5.5 on Letter) |
+| `authors.heading` | page title; with exactly one author the page switches to the solo layout (2.4in photo top-left, name under it, bio area) and defaults to "Meet the Author" |
+| `overrides.<file>.scene_images: {n: path}` | swap scene n's picture for an edited copy (e.g. trimmed); caption + number unchanged |
+
+`scan` honours `pages:` overrides (it used to ignore them).
+
+## Clean re-export (broken exports)
+
+App exports can carry duplicate scene rows, captions spilling onto an extra
+page, broken Chinese line breaks and a blank back page.
+`scripts/kw-export/export.sh <story-uuid> <out-dir>` re-renders the Classic
+A4 layout straight from the DB with those fixed (local copies of the app's
+`scripts/generate-story-pdf.tsx` and `StorybookTemplateA4.tsx`, marked
+`LOCAL PRINT FIX`; the app code is untouched). It reads **prod** with the
+service-role key, so get the user's OK first. When two duplicate rows hold
+different images, the `photo-page` (original upload) one wins: check it.
+
+## Trimming photo edges
+
+`scripts/scene_trim.py <.build/<story>/> <BOOK>/scenes-trimmed/` trims plain
+backdrop and empty paper from the extracted scene images. Then LOOK at a
+before/after sheet of every picture. Tune single files (`--margin 0.045`
+for thin strokes near the edge, `--margin 0 --thresh 60` to cut to a sheet
+of paper on gray), and leave a picture out of `scene_images` when its
+drawing reaches the edge. On *Mom, I Love You Forever*, the default pass
+clipped the hamster whiskers and the faint "Mama" on the flower page.
+
 ## Spine
 
 Without `--spine`, the spine width is estimated as pages x 0.0035in and

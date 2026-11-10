@@ -32,8 +32,11 @@ new class book. Change one only when the teacher asks.
     readable size (school line about 32px and credit about 22px on the
     1102px-wide design). It sits ≥0.25in above the trim. **Never list the children's names on
     the cover**; that would be far too long.
-12. **Back:** the **KindleWood Families** page, exactly as exported. It gets
-    no extra background. Check the © year printed on it.
+12. **Back:** always the standard **KindleWood Families** back cover,
+    `assets/back-cover/kindlewood-families-back.png` (from *My Imagination
+    Journey*, user rule 2026-11-10). The assembler uses it by default; set
+    `back_cover:` only when the user asks for a different back. Its © year
+    reads 2025, so mention it.
 13. **Spine:** its color is taken from the front art's left edge so the art
     wraps around. The text is the **book title** followed by
     **"© Powered by KindleWood Studio"**.
@@ -72,8 +75,9 @@ new class book. Change one only when the teacher asks.
     cards in the book's own font. Each card shows the original drawing and
     the in-story character, the name, and "In <child>'s Own Words". Two or
     three children share a row.
-22. **Scenes: 4 per page** (2 x 2), in a zigzag: the left picture has its
-    caption below, the right picture has its caption above. Captions sit on
+22. **Scenes: 4 per page** (2 x 2) for classroom books, in a zigzag: the left
+    picture has its caption below, the right picture has its caption above.
+    Single-author books use 2 per page (rule 36). Captions sit on
     pastel cards in **English + 中文**.
 23. **Comic-style number badges** count the scenes within each story (1, 2, 3…).
 24. When a story's last scene is left alone, the spare cell gets **Spark**
@@ -115,3 +119,26 @@ new class book. Change one only when the teacher asks.
     Chapter 1, Story 1), then roll it out to the whole book.
 34. Look at every build yourself (contact sheet + close-ups) **before**
     showing the teacher.
+
+## Single-author books (approved on *Mom, I Love You Forever*, Nov 2026)
+
+Every rule above applies to single-author books too. These add to them:
+
+35. **Ask first:** classroom story book or single-author book (SKILL.md A / A1).
+36. **2 scenes per page, zigzag:** picture and caption swap sides row by row.
+    Captions sit on pastel cards (rule 22) and every picture gets its comic
+    number badge (rule 23).
+37. **Never cut the art:** photographed artwork is shown whole
+    (`scene_fit: contain`). Plain photo background and empty paper may be
+    trimmed, but nothing the child drew, wrote or glued; check every trim
+    by eye. A picture whose faint pencil runs to the edge stays untrimmed.
+38. **Even sizes:** pictures get about the same visual area, whatever their shape.
+39. **No chapter labels** for one story: contents shows "Story 1: <title>"
+    and the story opener has no "Chapter 1 · Story 1" kicker. The opener
+    picture is larger (6.6in on Letter).
+40. **Meet the Author** (singular): the photo sits top-left, larger (2.4in),
+    with the name under it, and the rest of the page is for a short bio
+    written by the family. Leave it empty rather than inventing one.
+41. **About This Book** is drafted only from what the story shows and what
+    the family says. Its signature line comes from the family; until then
+    it is a visible placeholder, and say so.

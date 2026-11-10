@@ -1,15 +1,22 @@
 ---
 name: kw-publishing
-description: Make a printed KindleWood book. (1) Story-collection class book - onboard the teacher (story PDFs per chapter, curriculum, class emails, teachers' and children's names, cover) and build a Mixam perfect-bound anthology - finished or composed cover, About This Book, Meet Our Young Authors, one-page contents, chapters of flowing 4-per-page numbered scenes with re-typeset character designer cards, Keep Imagining, KindleWood back cover - following the approved rules in book-rules.md. (2) Single PDF -> print - resize one PDF to a trim size, quality check, and print-shop bleed. Use when the user wants to make/print/publish a book, combine stories into a book, convert a PDF for Mixam or KDP, or fix a "missing bleed" preflight warning.
+description: Make a printed KindleWood book. First ask - classroom story book or single-author book? Both use the same book path and rules. (1) Story-collection class book - onboard the teacher (story PDFs per chapter, curriculum, class emails, teachers' and children's names, cover) and build a Mixam perfect-bound anthology - finished or composed cover, About This Book, Meet Our Young Authors, one-page contents, chapters of flowing 4-per-page numbered scenes with re-typeset character designer cards, Keep Imagining, KindleWood back cover - following the approved rules in book-rules.md. (1b) Single-author book - one child's story (e.g. a gift book for Mom) with the same front matter, Meet the Author page, zigzag 2-per-page whole pictures, story-only contents. (2) Single PDF -> print (only when the user explicitly asks for a plain resize) - resize one PDF to a trim size, quality check, and print-shop bleed. Use when the user wants to make/print/publish a book, combine stories into a book, convert a PDF for Mixam or KDP, or fix a "missing bleed" preflight warning.
 ---
 
 # KindleWood Publishing
 
-Two jobs:
-- **A. Story-collection book.** Many KindleWood story PDFs become one printed
-  class book. This is the usual case: the teacher says "make a new book",
-  "combine these stories", and so on. Run the **guided interview below**.
-- **B. Single PDF to print.** Resize one finished PDF and add bleed. See
+**First question, every time someone hands over story PDFs** (AskUserQuestion,
+before anything else): *"Is this a classroom story book (many children) or a
+single-author book (one child's story)?"*
+
+- **A. Classroom story book.** Many KindleWood story PDFs become one printed
+  class book. Run the **guided interview below**.
+- **A1. Single-author book.** One child's story (or a few by the same child)
+  printed as a real book. It runs the **same guided interview and the same
+  rules**; only the differences in "A1. Single-author book" below change.
+- **B. Single PDF to print.** Resize one finished PDF and add bleed, with no
+  book pages added. Use it **only when the user explicitly asks for a plain
+  resize**. A PDF that will be printed as a book goes through A or A1. See
   "Single PDF -> print trim size" further down.
 
 Setup (both jobs). This needs poppler (`pdfinfo`/`pdfimages`/`pdftoppm`),
@@ -156,6 +163,43 @@ style on one story first, use `scene_numbers: first-story`.
 - Upload `out/<slug>-<size>-interior.pdf` and `out/<slug>-<size>-cover.pdf`.
   The separate `-cover-front/-back/-spine` PDFs and PNGs are for other uses.
   A ~130-page interior is about 230 MB, so the upload takes a few minutes.
+
+---
+
+# A1. Single-author book: what changes
+
+Worked out on *Mom, I Love You Forever* (Alice, age 6; Letter hardcover,
+Nov 2026). Everything in A and book-rules.md still applies (front matter,
+backgrounds, no blank pages, Keep Imagining, the standard back cover, never
+rewriting the child's words). Only these change; set them in `book.yaml`:
+
+| topic | classroom (A) | single-author (A1) |
+|---|---|---|
+| Step 0 checklist | class emails, teachers, school, children's names | notes about how the child made the book, who signs About (e.g. "Mom & Dad"), the child's name and age as printed, optional bio |
+| layout | `scenes_per_page: 4` (flowing 2x2) | `scenes_per_page: 2` (zigzag rows: picture and caption swap sides row by row) |
+| pictures | square crop (KindleWood 1024px art) | `scene_fit: contain`: each picture whole at its own aspect, with an equal visual area so tall, wide and square pictures read as one size |
+| photo edges | n/a | trim plain photo backgrounds/paper with `scripts/scene_trim.py`, review every picture by eye, keep any picture whose key visual reaches the edge untrimmed; wire the trimmed copies in with `scene_images` |
+| chapters | "Chapter N" kicker + chapter rows in contents | `single_chapter: true`: contents lists "Story 1: <title> By <byline>", the opener has no chapter label |
+| opener | 5.5in art | `opener_art: 6.6` (bigger story-cover picture) |
+| authors page | "Meet Our Young Authors" portrait grid | automatic with one author: "Meet the Author" (`authors.heading`), a 2.4in photo top-left with the name under it, the rest of the page left for a short bio (`note`, written by the family, never invented) |
+| photo | in-story character | the child's in-story character, a real photo, or a crop of the child's own cover drawing |
+| cover footer | "Created by <school> Storytellers" | `school: ""` (credit only) unless the family names one |
+| byline page | n/a | drop the export's "By <name>" scene page (it repeats the cover) with `pages: {2: "drop:extra"}` |
+
+Source PDF notes for one-child books:
+- **Photo-page stories** (real artwork photos, 1190x896 or 896x1190) are not
+  square, so `scan` calls them "designer". Force them with
+  `pages: {3: scene, ...}` and mark the KindleWood page `ad`.
+- **Check the export before building**: duplicate scenes (prod can hold
+  duplicate scene rows), captions that spill onto an extra page, and a blank
+  last page all mean the export is broken. Re-export it clean (see
+  book-assembly.md "Clean re-export") rather than patching pages.
+- **Hardcover (casebound):** the interior is the same file. The cover
+  builder still makes the paperback spread (0.125in bleed, page-count spine
+  estimate); a casebound case needs 0.8in wrap + 0.2in hinges and Mixam's
+  spine value, so say so and don't ship the paperback spread as a case.
+
+Example: `~/Documents/KindleWood Books/Mom, I Love You Forever/book.yaml`.
 
 ---
 
