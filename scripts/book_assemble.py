@@ -310,12 +310,16 @@ def _page_text(src, n):
     return sh(["pdftotext", "-f", str(n), "-l", str(n), src, "-"]).stdout
 
 
-def _split_caption(text):
+def _split_caption(text, lines=False):
+    """EN + 中文 caption text. lines=True returns the line lists instead
+    (the author's own line breaks, as printed in a clean export)."""
     en, zh = [], []
     for line in (l.strip() for l in text.splitlines()):
         if not line or line.isdigit():
             continue
         (zh if CJK.search(line) else en).append(line)
+    if lines:
+        return en, zh
     return " ".join(en), "".join(zh)
 
 
@@ -410,7 +414,9 @@ def load_story(src, cache, overrides=None):
             story["designers"].append(img)
         elif k == "scene":
             en, zh = _split_caption(texts[p])
+            en_l, zh_l = _split_caption(texts[p], lines=True)
             story["scenes"].append(dict(img=extract(p, f"p{p:03d}"), en=en, zh=zh,
+                                        en_lines=en_l, zh_lines=zh_l,
                                         no=len(story["scenes"]) + 1))
         elif k == "ad":
             px = max((w for w, h in _page_images(src).get(p, [])), default=0)
@@ -882,8 +888,8 @@ class Book:
                 f'<div class="artw" style="transform:rotate({[-1.2, 1][i]}deg)">'
                 f'<img class="art" src="{url(s["img"])}">'
                 + (f'<div class="sno">{s["no"]}</div>' if num else "") + '</div>'
-                f'<div class="cap fit c{(i + self.n_sc) % 4}"><div class="en">{esc(s["en"])}</div>'
-                f'<div class="zh">{esc(s["zh"])}</div></div></div>'
+                f'<div class="cap fit c{(i + self.n_sc) % 4}"><div class="en">{self.cap_text(s, "en")}</div>'
+                f'<div class="zh">{self.cap_text(s, "zh")}</div></div></div>'
                 for i, s in enumerate(d))
             self.n_sc += 1
             if len(d) == 1:
@@ -898,14 +904,18 @@ class Book:
         # aspect (photo pages of real artwork); default `cover` crops to a square.
         if (self.cfg.get("scene_fit") or "cover") == "contain":
             rowh = round((self.safe_h - 0.2) / 2, 3)
-            css += (
+            extra = (
                 ".zz .row {{ align-items: center }}\n"
                 ".zz .art {{ width: auto; height: auto; max-height: {h}in; "
                 "max-width: {w}in; object-fit: contain; border: .05in solid #fff }}\n"
                 ".solo .art, .s1 .art {{ width: auto; height: auto; aspect-ratio: auto; "
                 "max-width: 100%; max-height: {h2}in; object-fit: contain }}\n"
                 ".cell .art {{ object-fit: contain; background: #fff }}\n"
-            ).format(h=rowh, w=round(self.safe_w * 0.64, 3), h2=round(self.safe_h * 0.7, 3))
+            )
+            if self.cfg.get("caption_lines") == "keep":
+                extra += ".zz .cap.zcard {{ font-size: .8em; padding: .2in .16in }}\n"
+            css += extra.format(h=rowh, w=round(self.safe_w * self.art_share(), 3),
+                                h2=round(self.safe_h * 0.7, 3))
         return css
 
     def _css(self):
@@ -934,6 +944,12 @@ class Book:
             arows=arows,
             arowh=round((self.safe_h - head_h - (arows - 1) * 0.12) / arows, 3))
 
+    def art_share(self):
+        """Share of the zigzag row width the picture may take. With
+        caption_lines: keep the caption needs room for whole rhyme lines."""
+        d = 0.52 if self.cfg.get("caption_lines") == "keep" else 0.64
+        return float(self.cfg.get("zigzag_art_share") or d)
+
     def art_size(self, path):
         """contain mode: give every zigzag picture about the same area (portrait,
         landscape and square alike), capped by the row box."""
@@ -943,15 +959,23 @@ class Book:
         with Image.open(path) as im:
             r = im.width / im.height
         H = round((self.safe_h - 0.2) / 2, 3)
-        W = round(self.safe_w * 0.64, 3)
+        W = round(self.safe_w * self.art_share(), 3)
         area = 0.75 * W * H                   # fits r = 0.75 .. 1.33 untouched
         w, h = (area * r) ** 0.5, (area / r) ** 0.5
         k = min(1, W / w, H / h)
         return f' style="width:{w * k:.3f}in;height:{h * k:.3f}in;max-width:none;max-height:none"'
 
+    def cap_text(self, s, k):
+        """book.yaml `caption_lines: keep` prints the author's own line breaks
+        (one rhyme line per line); default joins them into one paragraph."""
+        lines = s.get(k + "_lines")
+        if self.cfg.get("caption_lines") == "keep" and lines:
+            return "<br>".join(esc(l) for l in lines)
+        return esc(s[k])
+
     def caption(self, s):
-        return (f'<div class="cap center fit"><div class="en">{esc(s["en"])}</div>'
-                f'<div class="zh">{esc(s["zh"])}</div></div>')
+        return (f'<div class="cap center fit"><div class="en">{self.cap_text(s, "en")}</div>'
+                f'<div class="zh">{self.cap_text(s, "zh")}</div></div>')
 
     def page_html(self, n, kind, data):
         side = "recto" if n % 2 else "verso"
@@ -1017,8 +1041,11 @@ class Book:
                     continue
                 if lvl == "st" and one:
                     n = sum(1 for l, *_ in self.index[:self.index.index((lvl, item, extra, pg)) + 1] if l == "st")
+                    # one author: the byline would repeat on every row, so leave it off
+                    solo = len((self.cfg.get("authors") or {}).get("list") or []) == 1
+                    by = "" if solo else f'<small>{esc(extra["byline"])}</small>'
                     rows.append(f'<li class="ch"><span>Story {n}: {esc(item.get("title") or extra["title"])} '
-                                f'<small>{esc(extra["byline"])}</small></span>'
+                                f'{by}</span>'
                                 f'<span class="dots"></span><span>{pg}</span></li>')
                     continue
                 if lvl == "ch":
@@ -1072,7 +1099,7 @@ class Book:
                     f'<div class="artw"><img class="art" src="{url(s["img"])}"{self.art_size(s["img"])}>'
                     + (f'<div class="sno">{s["no"]}</div>' if num and s.get("no") else "")
                     + f'</div><div class="cap center fit zcard c{(i + n) % 4}">'
-                    f'<div class="en">{esc(s["en"])}</div><div class="zh">{esc(s["zh"])}</div></div></div>'
+                    f'<div class="en">{self.cap_text(s, "en")}</div><div class="zh">{self.cap_text(s, "zh")}</div></div></div>'
                     for i, s in enumerate(data))
                 body = f'<div class="safe zz">{rows}</div>'
         elif kind == "flow":
@@ -1468,6 +1495,9 @@ def gather(cfg):
             for no, ed in (st.get("scene_edits") or {}).items():
                 sc = s["scenes"][int(no) - 1]
                 sc.update({k: v for k, v in ed.items() if k in ("en", "zh")})
+                for k in ("en", "zh"):  # an edit's own "\n" breaks become its lines
+                    if k in ed:
+                        sc[k + "_lines"] = [l.strip() for l in str(ed[k]).splitlines() if l.strip()]
                 if ed.get("img"):
                     sc["img"] = cfg["_rel"](ed["img"])
             for ins in sorted(st.get("insert_scenes") or [], key=lambda x: -int(x["after"])):

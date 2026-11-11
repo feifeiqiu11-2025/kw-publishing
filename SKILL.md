@@ -179,7 +179,8 @@ rewriting the child's words). Only these change; set them in `book.yaml`:
 | layout | `scenes_per_page: 4` (flowing 2x2) | `scenes_per_page: 2` (zigzag rows: picture and caption swap sides row by row) |
 | pictures | square crop (KindleWood 1024px art) | `scene_fit: contain`: each picture whole at its own aspect, with an equal visual area so tall, wide and square pictures read as one size |
 | photo edges | n/a | trim plain photo backgrounds/paper with `scripts/scene_trim.py`, review every picture by eye, keep any picture whose key visual reaches the edge untrimmed; wire the trimmed copies in with `scene_images` |
-| chapters | "Chapter N" kicker + chapter rows in contents | `single_chapter: true`: contents lists "Story 1: <title> By <byline>", the opener has no chapter label |
+| chapters | "Chapter N" kicker + chapter rows in contents | `single_chapter: true`: contents lists "Story 1: <title>" (no byline with one author), the opener has no chapter label |
+| captions | one paragraph | `caption_lines: keep`: the author's own line breaks, one rhyme line per line |
 | opener | 5.5in art | `opener_art: 6.6` (bigger story-cover picture) |
 | authors page | "Meet Our Young Authors" portrait grid | automatic with one author: "Meet the Author" (`authors.heading`), a 2.4in photo top-left with the name under it, the rest of the page left for a short bio (`note`, written by the family, never invented) |
 | photo | in-story character | the child's in-story character, a real photo, or a crop of the child's own cover drawing |

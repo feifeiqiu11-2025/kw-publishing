@@ -12,6 +12,7 @@ scene_numbers: true             # comic number badges; first-story = preview on 
 # scene_fit: contain            # whole pictures at their own aspect, equal visual area
 # single_chapter: true          # one story: no "Chapter N" labels, contents lists "Story 1"
 # opener_art: 6.6               # story-opener picture size in inches
+# caption_lines: keep          # captions keep the author's line breaks
 
 cover:
   front_image: cover/front.png  # a finished front cover, used as is (Recommended)

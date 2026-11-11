@@ -142,3 +142,6 @@ Every rule above applies to single-author books too. These add to them:
 41. **About This Book** is drafted only from what the story shows and what
     the family says. Its signature line comes from the family; until then
     it is a visible placeholder, and say so.
+42. **Captions keep the author's line breaks** (`caption_lines: keep`): one
+    rhyme line per line, in English and 中文, so they are easy to read aloud.
+43. **No repeated byline** in the contents of a single-author book.

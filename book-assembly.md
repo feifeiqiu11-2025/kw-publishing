@@ -204,6 +204,8 @@ overflow. That overflow was a bug in the hand-made zigzag sample.
 | `single_chapter: true` | no "Chapter N" kicker on the opener; contents rows read "Story N: <title> <byline>" |
 | `opener_art: 6.6` | story-opener picture size in inches (default 5.5 on Letter) |
 | `authors.heading` | page title; with exactly one author the page switches to the solo layout (2.4in photo top-left, name under it, bio area) and defaults to "Meet the Author" |
+| `caption_lines: keep` | print captions with the author's own line breaks (one rhyme line per line; EN + 中文). Needs a clean export, whose text lines ARE the author's lines; the zigzag picture then takes 52% of the width (`zigzag_art_share` to tune) and captions print at .8em, so only lines over about 45 characters still wrap |
+| contents byline | with one author the contents rows drop the "By ..." byline |
 | `overrides.<file>.scene_images: {n: path}` | swap scene n's picture for an edited copy (e.g. trimmed); caption + number unchanged |
 
 `scan` honours `pages:` overrides (it used to ignore them).
