@@ -74,7 +74,12 @@ new class book. Change one only when the teacher asks.
 21. **Meet the Character Designers** sits right under the opener, rebuilt as
     cards in the book's own font. Each card shows the original drawing and
     the in-story character, the name, and "In <child>'s Own Words". Two or
-    three children share a row.
+    three children share a row. **Use the space flexibly:** each "Original
+    Creation / In the Story" pair is stacked top/bottom or placed side by
+    side, whichever shows the drawings bigger in that card. Next to a
+    standing child with no text, the pair card gets the wider column
+    (about 60/40). A child's own words always go on their own card, never on
+    "<Child>'s Rescue Mission".
 22. **Scenes: 4 per page** (2 x 2) for classroom books, in a zigzag: the left
     picture has its caption below, the right picture has its caption above.
     Single-author books use 2 per page (rule 36). Captions sit on

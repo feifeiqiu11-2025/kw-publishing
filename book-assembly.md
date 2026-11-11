@@ -48,6 +48,12 @@ but stories inside a chapter run on, so there are no half-empty pages:
   caption and the "In X's Own Words" text (`_text_blocks`), and rebuilds
   them as cards in the book fonts. A lone card with words lays out sideways;
   a lone group drawing ("Farm") spans the row.
+  Card layout per row: `card_weights()` gives a drawing-pair card 1.6x the
+  width of a text-free standing child next to it; `stack_pair()` estimates
+  the picture size of the pair stacked vs side by side from the card width
+  and the height its text leaves, and tags the card `stk` or `sbs`.
+  "Own Words" attach to the child's exact-name card first, so they never
+  land on a "<Child>'s Rescue Mission" drawing card.
 - **scenes** = 2 per row (zigzag cells). A story's odd last scene gets a
   **Spark cell**: a blue-line pose from `assets/spark/` plus an encouraging
   line (`FILLERS`, rotated).

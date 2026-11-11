@@ -266,8 +266,13 @@ def designer_units(src, pages, render):
                     used.add(j)
                     last = u["bottom"]
             who = m[1].strip()
-            unit = next((x for x in page_units + units if x["name"] and
-                         x["name"].lower().startswith(who.lower()[:4]) and not x["words"]), None)
+            cands = [x for x in page_units + units if x["name"] and not x["words"] and
+                     x["name"].lower().startswith(who.lower()[:4])]
+            # prefer the child's own card ("Hebe") over a drawing named after
+            # them ("Hebe's Rescue Mission" -- Designed by Hebe)
+            unit = next((x for x in cands if x["name"].lower() == who.lower()),
+                        next((x for x in cands if "—" not in x["caption"]),
+                             cands[0] if cands else None))
             nameless = [x for x in page_units if not x["name"] and x["imgs"]]
             if unit is None and nameless:  # no caption found: the page's pictures are theirs
                 unit = nameless[0]
@@ -655,6 +660,10 @@ body {{ font-family: "{en}", "{zhb}", sans-serif; color: #3b2f2a;
              max-width: 100%; object-fit: contain; border-radius: .06in }}
 .dimgs figcaption {{ font-size: .5em; color: #8a7d76; margin-top: .02in; flex: none }}
 .dimgs figcaption:empty {{ display: none }}
+.dcard.stk .dimgs {{ flex-direction: column; flex-wrap: nowrap; align-items: center }}
+.dcard.stk .dimgs figure {{ max-width: 100%; width: 100%; height: auto; flex: 1 1 0; min-height: 0 }}
+.dcard.sbs .dimgs figure {{ max-width: 50% }}
+.dimgs.n1 img {{ max-height: 100% }}
 .dtext {{ flex: 0 1 auto; max-height: 60%; min-height: 0; text-align: center;
          font-size: .78em; line-height: 1.3 }}
 .dcard.solo .dtext {{ max-height: 100%; align-self: center; flex: 1 }}
@@ -746,6 +755,39 @@ fams.forEach(function(f){loads.push(document.fonts.load('400 16px "'+f+'"'),
                                       document.fonts.load('700 16px "'+f+'"'));});
 Promise.all(loads).then(function(){return document.fonts.ready}).then(fit);
 </script>"""
+
+
+def card_weights(units):
+    """Column widths for a row of designer cards. A drawing pair next to a
+    standing child with no text gets the wider card (the child is tall and
+    narrow and loses nothing)."""
+    if len(units) == 2:
+        k = [len(u["imgs"]) for u in units]
+        if sorted(k) == [1, 2] and not units[k.index(1)]["words"]:
+            return [1.6 if n == 2 else 1.0 for n in k]
+    return [1.0] * len(units)
+
+
+def stack_pair(u, card_w, row_h):
+    """True when the "Original Creation / In the Story" pair shows bigger
+    stacked top/bottom than side by side, given the card's width and the
+    height its text leaves (inches)."""
+    from PIL import Image
+    cpl, lines = max(10, int(card_w * 72 / 6.1)), 0
+    for t in [u["caption"] or u["name"]] + ([u["title"]] if u["words"] else []) + u["words"]:
+        lines += max(1, -(-len(t) // cpl))
+    avail = row_h - lines * 0.205 - 0.22
+    ars = []
+    for p in u["imgs"]:
+        with Image.open(p) as im:
+            ars.append(im.width / im.height)
+    lab = 0.16
+    w = (card_w - 0.06) / 2
+    s = min(1.0, (avail - lab) / max(w / a for a in ars))
+    side = sum((w * s) ** 2 / a for a in ars)
+    h = (avail - 2 * lab - 0.06) / 2
+    stacked = sum(min(card_w, h * a) ** 2 / a for a in ars)
+    return stacked > side * 1.05
 
 
 def pack_units(units):
@@ -863,21 +905,28 @@ class Book:
         if kind == "des":
             units, first = d
             cards = ""
-            for u in units:
+            wts = card_weights(units)
+            row_h = (self.safe_h - 0.22) / 2 - (0.3 if first else 0) - 0.2
+            for u, wt in zip(units, wts):
+                card_w = (self.safe_w - (len(units) - 1) * 0.16) * wt / sum(wts) - 0.24
+                orient = ""
+                if len(u["imgs"]) == 2:
+                    orient = " stk" if stack_pair(u, card_w, row_h) else " sbs"
                 labels = (["Original Creation", "In the Story"] if len(u["imgs"]) == 2
                           else [""] * len(u["imgs"]))
                 figs = "".join(f'<figure><img src="{url(p)}"><figcaption>{l}</figcaption></figure>'
                                for p, l in zip(u["imgs"], labels))
                 words = "<br>".join(esc(l) for l in u["words"])
                 solo = " solo" if len(units) == 1 and u["words"] else ""
-                cards += (f'<div class="dcard{solo}">'
+                cards += (f'<div class="dcard{solo}{orient}">'
                           + (f'<div class="dimgs n{len(u["imgs"])}">{figs}</div>' if figs else "")
                           + f'<div class="dtext fit"><div class="dname">{esc(u["caption"] or u["name"])}</div>'
                           + (f'<div class="dwt">{esc(u["title"])}</div><div class="dw">{words}</div>'
                              if u["words"] else "") + '</div></div>')
             head = '<h3>Meet the Character Designers</h3>' if first else ""
+            cols = " ".join(f"{w}fr" for w in wts)
             return (f'<div class="row des">{head}<div class="dcards" style="grid-template-columns:'
-                    f'repeat({len(units)}, 1fr)">{cards}</div></div>')
+                    f'{cols}">{cards}</div></div>')
         if kind == "desimg":
             imgs = "".join(f'<img src="{url(p)}">' for p in d)
             return f'<div class="row desimg">{imgs}</div>'
